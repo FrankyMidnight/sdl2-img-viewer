@@ -7,6 +7,7 @@
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_scancode.h>
+#include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_surface.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_video.h>
@@ -17,7 +18,7 @@
 int WIN_WIDTH = 800;
 int WIN_HEIGHT = 600;
 const int MAX_CHARS = 256;
-
+const Uint32 WINDOW_FLAGS = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN;
 SDL_Window *window = NULL;
 SDL_Surface *surface = NULL;
 SDL_Renderer *renderer = NULL;
@@ -32,6 +33,7 @@ void Draw();
 void Update();
 void load_dir();
 void update_windowsize();
+void toggle_fullscreen();
 size_t total_files = {0};
 char *file_list;
 size_t current_idx = 0;
@@ -57,7 +59,7 @@ int Init()
     }
     // WINDOW
     window = SDL_CreateWindow("test", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIN_WIDTH, WIN_HEIGHT,
-                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+                              WINDOW_FLAGS);
     if (window == NULL)
     {
         SDL_Log("Impossibile creare finestra : %s", SDL_GetError());
@@ -121,7 +123,7 @@ void Draw()
     // DEST RECT
     // LEGGO SIZE ATTUALE DELLA WINDOW
     SDL_GetWindowSize(window, &WIN_WIDTH, &WIN_HEIGHT);
-    SDL_Log("WINDOW SIZE w : %5d\th : %5d",WIN_WIDTH, WIN_HEIGHT);
+    SDL_Log("WINDOW SIZE w : %5d\th : %5d", WIN_WIDTH, WIN_HEIGHT);
     // IMPOSTO WIDTH DEL RENDERING IMMAGINE A WIN WIDTH
     int dest_width = WIN_WIDTH;
     // CALCOLO DEL RENDERING IMAGINE HEIGHT = WIDTH / RATIO
@@ -138,7 +140,7 @@ void Draw()
         y_offset = 0;
     }
     dest_rect = (SDL_Rect){.w = dest_width, .h = dest_height, .x = x_offset, .y = y_offset};
-    SDL_Log("dest_rec w : %5d\th : %5d\tx_offset : %5d\ty_offset : %5d ",dest_width, dest_height, x_offset, y_offset);
+    SDL_Log("dest_rec w : %5d\th : %5d\tx_offset : %5d\ty_offset : %5d ", dest_width, dest_height, x_offset, y_offset);
     // FREE SURFACE
     SDL_FreeSurface(surface);
 }
@@ -163,7 +165,7 @@ void Update()
             case SDL_QUIT:
                 running = 0;
                 break;
-            
+
                 // ESCI SU PRESSIONE TASTO ESCAPE
             case SDL_KEYDOWN:
                 switch (event.key.keysym.sym)
@@ -172,7 +174,9 @@ void Update()
                 case SDLK_q:
                     running = 0;
                     break;
-                // case SDLK_l:
+                case SDLK_F11:
+                    toggle_fullscreen();
+                    break;
                 case SDLK_RIGHT:
                     if (file_idx > total_files - 1)
                     {
@@ -212,7 +216,7 @@ void Update()
             }
             switch (event.window.event)
             {
-                case SDL_WINDOWEVENT_RESIZED:
+            case SDL_WINDOWEVENT_RESIZED:
                 update_windowsize();
                 break;
             }
@@ -277,10 +281,25 @@ void load_dir()
 void update_windowsize()
 {
     int w = 0;
-    int h = 0;;
-    SDL_GetWindowSizeInPixels(window, &w , &h );
-    SDL_Log("WIndow resized , new w : %5d\tnew h : %5d",w,h);
+    int h = 0;
+    SDL_GetWindowSizeInPixels(window, &w, &h);
+    SDL_Log("WIndow resized , new w : %5d\tnew h : %5d", w, h);
     WIN_WIDTH = w;
     WIN_HEIGHT = h;
+    Draw();
+}
+void toggle_fullscreen()
+{
+    Uint32 current_flags = SDL_GetWindowFlags(window);
+    if ((current_flags & SDL_WINDOW_FULLSCREEN_DESKTOP) == SDL_WINDOW_FULLSCREEN_DESKTOP)
+    {
+        SDL_SetWindowFullscreen(window, 0);
+        SDL_Log("Exit Fullscreen");
+    }
+    else
+    {
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        SDL_Log("Fullscreen Mode");
+    }
     Draw();
 }
